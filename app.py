@@ -216,16 +216,12 @@ def update_user_by_id(user_id):
     field_values.append(user_id)
     update_query = "UPDATE users SET " + ','.join(update_fields) + " WHERE user_id=%s"
 
-    # cursor.execute('''SELECT org_id, name, phone, city, state, active, type ''')
-
     cursor.execute(update_query, field_values)
     conn.commit()
 
     return get_user_by_id(user_id), 200
 
     
-
-    cursor.execute('''SELECT user_id, first_name, last_name, email, phone, city, state, org_id, active ''')
 
 @app.route('/organization/update/<org_id>', methods=['POST','PATCH','PUT'])
 def update_org_by_id(org_id):
@@ -243,8 +239,10 @@ def update_org_by_id(org_id):
         if field in request_params.keys():
             update_fields.append(f'{field}=%s')
             field_values.append(request_params[field])
-        field_values.append(org_id)
+        else:
+            return jsonify(f"Field {field} is invalid"), 400
 
+    field_values.append(org_id)
     update_query = "UPDATE users SET " + ','.join(update_fields) + " WHERE user_id=%s"
 
     cursor.execute(update_query, field_values)

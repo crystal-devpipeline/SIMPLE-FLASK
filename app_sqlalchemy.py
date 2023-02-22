@@ -252,138 +252,72 @@ def delete_organization():
 
 #DEACTIVATE **************************************
 
-@app.route('/user/deactivate/<user_id>', methods=['POST', 'PUT', 'PATCH'])
-def deactivate_user_by_id(user_id):
-    if not user_exists(user_id):
-        return jsonify(f"User {user_id} not found"), 404
+# @app.route('/user/deactivate/<user_id>', methods=['POST', 'PUT', 'PATCH'])
+# def deactivate_user_by_id(user_id):
+#     if not user_exists(user_id):
+#         return jsonify(f"User {user_id} not found"), 404
     
-    cursor.execute("SELECT * FROM users WHERE user_id=%s;", (user_id,))
-    results = cursor.fetchall()
+#     cursor.execute("SELECT * FROM users WHERE user_id=%s;", (user_id,))
+#     results = cursor.fetchall()
 
-    if not results: 
-        return (f"User {user_id} not found"), 404
+#     if not results: 
+#         return (f"User {user_id} not found"), 404
 
-    cursor.execute("UPDATE users SET active='false' WHERE user_id=%s", (user_id,))
-    conn.commit()
-    
-    return ("user deactivated"), 200
-
-
-@app.route('/organization/deactivate/<org_id>', methods=['POST', 'PUT', 'PATCH'])
-def deactivate_org_by_id(org_id):
-    if not org_exists(org_id):
-        return jsonify(f"User {org_id} not found"), 404
-    
-    cursor.execute("SELECT * FROM organizations WHERE org_id=%s;", (org_id,))
-    results = cursor.fetchall()
-
-    if not results: 
-        return (f"Organization # {org_id} not found"), 404
-
-    cursor.execute("UPDATE organizations SET active='false' WHERE org_id=%s", (org_id,))
-    conn.commit()
-    
-    return ("Organization deactivated"), 200
-#ACTIVATE **************************************
-
-@app.route('/user/activate/<user_id>', methods=['POST', 'PATCH', 'PUT'])
-def activate_user_by_id(user_id):
-    if not user_exists(user_id):
-        return jsonify(f"User {user_id} not found"), 404
-
-    cursor.execute("SELECT * FROM users WHERE user_id=%s;", (user_id,))
-    results = cursor.fetchall()
-
-    if not results:
-        return (f"User {user_id} not found"), 404
-
-    cursor.execute("UPDATE users SET active='t' WHERE user_id%s;", (user_id))
-    conn.commit()
-
-    return(f"User {user_id} activated"), 200
-
-@app.route('/organization/activate/<org_id>', methods=['POST', 'PUT', 'PATCH'])
-def activate_org_by_id(org_id):
-    if not org_exists(org_id):
-        return jsonify(f"User {org_id} not found"), 404
-    
-    cursor.execute("SELECT * FROM organizations WHERE org_id=%s;", (org_id,))
-    results = cursor.fetchall()
-
-    if not results: 
-        return (f"Organization#: {org_id} not found"), 404
-
-    cursor.execute("UPDATE organizations SET active='true' WHERE org_id=%s", (org_id,))
-    conn.commit()
-    
-    return('Organization Activated'), 200
-
-
-
-
-
-
-
-
-    
-
-        
-
-    return jsonify(get_user_from_object(user_record)), 200
-
-# @app.route('/user/delete/<user_id>', methods=['GET'])
-# def delete_user(user_id):
-#     cursor.execute("DELETE FROM users WHERE user_id=%s;", (user_id,))
-#     conn.commit()
-
-#     return("User Deleted"), 200
-
-# def org_exists(org_id):
-#     if not org_id.isnumeric():
-#         return False
-#     cursor.execute('''SELECT org_id, name, phone, city, state, active, type ''')
-
-
-# @app.route('/org/add', methods=['POST'])
-# def add_organization():
-#     data = request.json
-#     name = data.get('name')
-#     phone = data.get('phone')
-#     if len(phone) > 20: 
-#         return "Your phone number should be under 20 characters", 400
-#     city = data.get('city')
-#     state = data.get('state')
-#     active = False
-#     if 'active' in data:
-#         active = data.get('active') == 'true'
-#     type= data.get('type')
-
-#     cursor.execute(
-#         '''
-#         INSERT INTO users (name, phone, city, state, active, type)
-#         VALUES (%s, %s, %s,%s, %s,%s)
-#         ''', (name, phone, city, state, active, type))
+#     cursor.execute("UPDATE users SET active='false' WHERE user_id=%s", (user_id,))
 #     conn.commit()
     
-#     return("Organization added"), 201
+#     return ("user deactivated"), 200
 
 
-
-# @app.route('/organization/get/<org_id>', methods=['GET'])
-# def get_org_by_id(org_id):
-#     if not org_id.isnumeric(): 
-#         return (f"Invalid org_id: {org_id}"), 400
+# @app.route('/organization/deactivate/<org_id>', methods=['POST', 'PUT', 'PATCH'])
+# def deactivate_org_by_id(org_id):
+#     if not org_exists(org_id):
+#         return jsonify(f"User {org_id} not found"), 404
     
-#     cursor.execute("SELECT * FROM organizations WHERE org_id=%s, first_name, last_name, email, phone, city, state, org_id, active FROM users WHERE org_id=%s;", (org_id,))
-#     u = cursor.fetchone()
+#     cursor.execute("SELECT * FROM organizations WHERE org_id=%s;", (org_id,))
+#     results = cursor.fetchall()
 
-#     if not u:
-#         return (f"Organization {org_id} not found!"), 404
-#     org_record = get_user_from_list(u)
-        
-#     return jsonify(org_record), 200
+#     if not results: 
+#         return (f"Organization # {org_id} not found"), 404
+
+#     cursor.execute("UPDATE organizations SET active='false' WHERE org_id=%s", (org_id,))
+#     conn.commit()
     
-# 
+#     return ("Organization deactivated"), 200
+# #ACTIVATE **************************************
+
+# @app.route('/user/activate/<user_id>', methods=['POST', 'PATCH', 'PUT'])
+# def activate_user_by_id(user_id):
+#     if not user_exists(user_id):
+#         return jsonify(f"User {user_id} not found"), 404
+
+#     cursor.execute("SELECT * FROM users WHERE user_id=%s;", (user_id,))
+#     results = cursor.fetchall()
+
+#     if not results:
+#         return (f"User {user_id} not found"), 404
+
+#     cursor.execute("UPDATE users SET active='t' WHERE user_id%s;", (user_id))
+#     conn.commit()
+
+#     return(f"User {user_id} activated"), 200
+
+# @app.route('/organization/activate/<org_id>', methods=['POST', 'PUT', 'PATCH'])
+# def activate_org_by_id(org_id):
+#     if not org_exists(org_id):
+#         return jsonify(f"User {org_id} not found"), 404
+    
+#     cursor.execute("SELECT * FROM organizations WHERE org_id=%s;", (org_id,))
+#     results = cursor.fetchall()
+
+#     if not results: 
+#         return (f"Organization#: {org_id} not found"), 404
+
+#     cursor.execute("UPDATE organizations SET active='true' WHERE org_id=%s", (org_id,))
+#     conn.commit()
+    
+#     return('Organization Activated'), 200
+
 
 
 if __name__ == '__main__': 
