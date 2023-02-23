@@ -212,8 +212,8 @@ def update_user_by_id(user_id):
             field_values.append(request_params[field])
         else:
             return jsonify(f"Field {field} is invalid"), 400
-        
     field_values.append(user_id)
+        
     update_query = "UPDATE users SET " + ','.join(update_fields) + " WHERE user_id=%s"
 
     cursor.execute(update_query, field_values)
