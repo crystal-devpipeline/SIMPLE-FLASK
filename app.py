@@ -356,3 +356,5 @@ def activate_org_by_id(org_id):
 
 if __name__ == '__main__': 
     app.run(host='0.0.0.0', port=8086)
+
+# I think you may just need to put a db.init() in this file if you're running app.py, kinda similar to youre app_sqlalchemy.py. That plus db.create_all(). -Blake

@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request
-from users import Users
-from organizations import Organization
+from users import Users, user_schema, users_schema
+from organizations import Organizations, org_schema, orgs_schema, public_org_schema, public_orgs_schema
 from db import db, init_db
 import uuid
+
 
 app = Flask(__name__)
 
@@ -18,11 +19,9 @@ def create_all():
     with app.app_context():
         db.create_all()
         
-
 def is_valid_uuid(value):
     try:
         uuid.UUID(str(value))
-
         return True
     except ValueError:
         return False
@@ -35,33 +34,11 @@ def org_exists(org_id):
     if not org_id.isnumeric():
         return False
 
-def get_user_from_object(user):
-    return{
-        "user_id":user.user_id,
-        "first_name":user.first_name,
-        "last_name":user.last_name,
-        "email":user.email,
-        "phone":user.phone,
-        "city":user.city,
-        "state":user.state,
-        "active":user.active
-    }
-
-def get_org_from_object(organization):
-    return{
-        "name":organization.name,
-        "phone":organization.phone,
-        "city":organization.city,
-        "state":organization.state,
-        "type":organization.type,
-        "active":organization.active,       
-    }
 
 #CREATE**************************************
 @app.route('/user/add', methods=['POST'])
 def add_user():
     data = request.json
-
 
     first_name = data.get('first_name')
     last_name = data.get('last_name')
@@ -73,20 +50,22 @@ def add_user():
         return "Your phone number should be under 20 characters", 400
     city = data.get('city')
     state= data.get('state')
-    # org_id = data.get('org_id')
+    age = data.get('age')
+    org_id = data.get('org_id')
 
-    new_user_record = Users(first_name, last_name, email, phone, city, state)
-    db.session.add(new_user_record) # added from db.Model 
+    new_user_record = Users(first_name, last_name, email, phone, city, state, age, org_id)
+    db.session.add(new_user_record) 
     db.session.commit()
 
-    return "User added", 201
-
+    return jsonify(org_schema.dump(new_user_record)), 201
 
 
 @app.route('/org/add', methods=['POST'])
 def add_organization():
     data = request.json
     name = data.get('name')
+    if not name or len(name) < 1:
+        return "Organization name must not be an empty str", 400
     phone = data.get('phone')
     if len(phone) > 20: 
         return "Your phone number should be under 20 characters", 400
@@ -97,11 +76,11 @@ def add_organization():
         active = data.get('active') == 'true'
     type= data.get('type')
 
-    new_org_record = Organization(name, phone, city, state, type, active='t')
-    db.session.add(new_org_record)
+    new_org = Organizations(name, phone, city, state, type, active)
+    db.session.add(new_org)
     db.session.commit()
     
-    return("Organization added"), 201
+    return jsonify(org_schema.dump(new_org)), 201
 
 
 #READ **************************************
@@ -111,13 +90,10 @@ def get_all_active_users():
     user_records = db.session.query(Users).filter(Users.active==True).all()
 
     if user_records:
-        users = []
-        for u in user_records:
-            user_record = get_user_from_object(u)
-            users.append(user_record)
-        return jsonify(users), 200
+        return jsonify(users_schema.dump(user_records)), 200
 
     return 'No users found', 404
+
 
 @app.route('/user/get/<user_id>', methods=['GET'])
 def get_user_by_id(user_id):
@@ -129,30 +105,45 @@ def get_user_by_id(user_id):
     if not user_record:
         return jsonify("User not found"), 404
 
- 
-    return jsonify(get_user_from_object(user_record)), 200
+    return jsonify(user_schema.dump(user_record)), 200
 
-@app.route('/org/get/<org_id>', methods=['GET'])
-def get_org_by_id(org_id):
-    if not is_valid_uuid(org_id):
-        return jsonify(f"Organizaton {org_id} not found"), 404
 
-    org_record= db.session.query(Organization).filter(Organization.org_id == org_id).first()
+@app.route('/orgs/get', methods=['GET'])
+def get_all_active_orgs():
+    orgs_record = db.session.query(Organizations).filter(Organizations.active==True).all()
 
-    if not org_record:
-        return jsonify("Organization not found"), 404
+    if orgs_record:
+        return jsonify(orgs_schema.dump(orgs_record)), 200
+       
+    return jsonify("No organizations found"), 404
 
     
-    return jsonify(), 200
+@app.route('/org/get/<org_id>', methods=['GET'])
+def get_org_by_id(org_id):
+    org_record = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()  
+    
+    if not org_record:
+        return jsonify("Organization not found"), 404
+    if org_record:
+        return jsonify(org_schema.dump(org_record)), 200
+    
+@app.route('/org/public/get', methods=['GET'])
+def get_public_org_info():
+    orgs_record = db.session.query(Organizations).filter(Organizations.active==True).all()
 
-
+    if orgs_record:
+        return jsonify(public_orgs_schema.dump(orgs_record)), 200
+       
+    return jsonify("Hey Yo! No organizations found"), 404
+    
+    return(), 200
+  
+   
 #UPDATE **************************************
 @app.route('/user/update/<user_id>', methods=['POST', 'PATCH', 'PUT'])
 def update_user_by_id(user_id):
 
     request_params = request.json
-
-
     user_record = db.session.query(Users).filter(Users.user_id == user_id).first()
 
     if 'first_name' in request_params:
@@ -167,23 +158,24 @@ def update_user_by_id(user_id):
         user_record.city = request_params['city']
     if 'state' in request_params:
         user_record.state = request_params['state']
+    if 'age' in request_params:
+        user_record.age = request_params['age']
     if 'org_id' in request_params:
         user_record.org_id = request_params['org_id']
     if 'active' in request_params:
         user_record.active = request_params['active']
     
     db.session.commit()
+    return jsonify(user_schema.dump(user_record)), 201
 
-    return get_user_by_id(user_id), 200
 
-@app.route('/organization/update/<org_id>', methods=['POST','PATCH','PUT'])
+@app.route('/org/update/<org_id>', methods=['POST','PATCH','PUT'])
 def update_org_by_id(org_id):
     if not org_exists(org_id):
-        return jsonify(f"User {org_id} not found"), 404
+        return jsonify(f"Organization {org_id} not found"), 404
 
     request_params = request.json
-
-    org_record = db.session.query(Organization).filter(Organization.org_id == org_id).first()
+    org_record = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
 
     if 'name' in request_params:
         org_record.name = request_params['name']
@@ -196,77 +188,43 @@ def update_org_by_id(org_id):
     if 'type' in request_params:
         org_record.type = request_params['type']
     if 'active' in request_params:
-        org_record.active = request_params['active']
+        org_record.active = request_params.get['active'] != 'false'
 
     db.session.commit()
-
-    return get_user_by_id(org_id), 200
+    return jsonify(org_schema.dump(org_record)), 201
     
 
 #DELETE **************************************
 @app.route('/user/delete', methods=['POST'])
-def delete_user():
-    data = request.json
-
-
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    email = data.get('email') #None
-    if not email:
-        return "Email must not be an empty str", 400
-    phone = data.get('phone')
-    if len(phone) > 20: 
-        return "Your phone number should be under 20 characters", 400
-    city = data.get('city')
-    state= data.get('state')
-    # org_id = data.get('org_id')
-
-    new_user_record = Users(first_name, last_name, email, phone, city, state)
-    db.session.delete(new_user_record) # deleted from db.Model 
-    db.session.commit()
-
+def user_delete(user_id):
+    user_data = db.session.query(Users).filter(Users.user_id == user_id).first()
+    if user_data:
+        db.session.delete(user_data)
+        db.session.commit()
+    
     return "User deleted", 201
 
 
-
 @app.route('/org/delete', methods=['POST'])
-def delete_organization():
-    data = request.json
+def org_delete(user_id):
+    org_data = db.session.query(Users).filter(Users.user_id == user_id).first()
+    if org_data:
+        db.session.delete(org_data)
+        db.session.commit()
+    
+    return "User deleted", 201
 
-    name = data.get('name')
-    phone = data.get('phone')
-    if len(phone) > 20: 
-        return "Your phone number should be under 20 characters", 400
-    city = data.get('city')
-    state = data.get('state')
-    active = False
-    if 'active' in data:
-        active = data.get('active') == 'true'
-    type= data.get('type')
-
-    org_record = Organization(name, phone, city, state, type, active='t')
-    db.session.delete(org_record)
-    db.session.commit()
-
-    return("Organization deleted"), 201
 
 #DEACTIVATE **************************************
-
-@app.route('/user/deactivate/<user_id>', methods=['POST', 'PUT', 'PATCH'])
+@app.route('/user/deactivate/<user_id>', methods=['POST', 'PUT', 'PATCH'])#TODO: make this work
 def deactivate_user_by_id(user_id):
-    try:
-        user = db.session.query(Users).filter(Users.user_id == user_id).first()
-        user.active = False 
-        db.session.commit()
-        return get_user_by_id(user_id), 200
-    except user_exists:
-        return jsonify(f"User {user_id} not found"), 404
-        
+    return activate_user_by_id(user_id, False)
+
 
 @app.route('/org/deactivate/<org_id>', methods=['POST', 'PUT', 'PATCH'])
 def deactivate_org_by_id(org_id):
     try:
-        org = db.session.query(Organization).filter(Organization.org_id == org_id).first()
+        org = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
         org.active = False 
         db.session.commit()
         return get_org_by_id(org_id), 200
@@ -276,20 +234,24 @@ def deactivate_org_by_id(org_id):
 # #ACTIVATE **************************************
 
 @app.route('/user/activate/<user_id>', methods=['POST', 'PUT', 'PATCH'])
-def activate_user_by_id(user_id):
-    try:
-        user = db.session.query(Users).filter(Users.user_id == user_id).first()
-        user.active = False 
-        db.session.commit()
-        return get_user_by_id(user_id), 200
-    except user_exists:
-        return jsonify(f"User {user_id} not found"), 404
+def activate_user_by_id(user_id, set_active=True):
+    user_record = db.session.query(Users).filter(Users.user_id == user_id).first()
 
+    if not user_record:
+        return jsonify(f"User {user_id} not found"), 404
+    
+    user_record.active = set_active
+    db.session.commit()
+
+
+    return jsonify(user_schema.dump(user_record)), 200
+
+  
 
 @app.route('/org/activate/<org_id>', methods=['POST', 'PUT', 'PATCH'])
 def activate_org_by_id(org_id):
     try:
-        org = db.session.query(Organization).filter(Organization.org_id == org_id).first()
+        org = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
         org.active = False 
         db.session.commit()
         return get_org_by_id(org_id), 200
