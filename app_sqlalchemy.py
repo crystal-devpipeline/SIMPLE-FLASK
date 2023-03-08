@@ -31,8 +31,11 @@ def user_exists(user_id):
         return False
 
 def org_exists(org_id):
-    if not org_id.isnumeric():
-        return False
+    org = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
+    if org:
+        return True
+    return False
+
 
 
 #CREATE**************************************
@@ -57,7 +60,7 @@ def add_user():
     db.session.add(new_user_record) 
     db.session.commit()
 
-    return jsonify(org_schema.dump(new_user_record)), 201
+    return jsonify(user_schema.dump(new_user_record)), 201
 
 
 @app.route('/org/add', methods=['POST'])
@@ -71,9 +74,9 @@ def add_organization():
         return "Your phone number should be under 20 characters", 400
     city = data.get('city')
     state = data.get('state')
-    active = False
+    active = True
     if 'active' in data:
-        active = data.get('active') == 'true'
+        active = data.get('active')
     type= data.get('type')
 
     new_org = Organizations(name, phone, city, state, type, active)
@@ -195,7 +198,7 @@ def update_org_by_id(org_id):
     
 
 #DELETE **************************************
-@app.route('/user/delete', methods=['POST'])
+@app.route('/user/delete/<user_id>', methods=['DELETE'])
 def user_delete(user_id):
     user_data = db.session.query(Users).filter(Users.user_id == user_id).first()
     if user_data:
@@ -205,14 +208,14 @@ def user_delete(user_id):
     return "User deleted", 201
 
 
-@app.route('/org/delete', methods=['POST'])
-def org_delete(user_id):
-    org_data = db.session.query(Users).filter(Users.user_id == user_id).first()
+@app.route('/org/delete/<org_id>', methods=['DELETE'])
+def org_delete(org_id):
+    org_data = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
     if org_data:
         db.session.delete(org_data)
         db.session.commit()
     
-    return "User deleted", 201
+    return "Organization deleted", 201
 
 
 #DEACTIVATE **************************************
@@ -227,7 +230,7 @@ def deactivate_org_by_id(org_id):
         org = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
         org.active = False 
         db.session.commit()
-        return get_org_by_id(org_id), 200
+        return get_org_by_id(org_id)
     except org_exists:
         return jsonify(f"Organization {org_id} not found"), 404
 
@@ -252,12 +255,12 @@ def activate_user_by_id(user_id, set_active=True):
 def activate_org_by_id(org_id):
     try:
         org = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
-        org.active = False 
+        org.active = True 
         db.session.commit()
-        return get_org_by_id(org_id), 200
     except org_exists:
         return jsonify(f"Organization {org_id} not found"), 404
 
+    return get_org_by_id(org_id)
 
 
 

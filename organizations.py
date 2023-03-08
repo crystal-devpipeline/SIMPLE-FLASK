@@ -25,7 +25,7 @@ class Organizations(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     type = db.Column(db.String())
 
-    users = db.relationship('Users', back_populates='organization')
+    users = db.relationship('Users', back_populates='organization')#field on another object
 
     def __init__(self, name, phone, city, state, type, active=True):
         self.name = name

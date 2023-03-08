@@ -223,7 +223,7 @@ def update_user_by_id(user_id):
 
     
 
-@app.route('/organization/update/<org_id>', methods=['POST','PATCH','PUT'])
+@app.route('/org/update/<org_id>', methods=['POST','PATCH','PUT'])
 def update_org_by_id(org_id):
     if not org_exists(org_id):
         return jsonify(f"User {org_id} not found"), 404

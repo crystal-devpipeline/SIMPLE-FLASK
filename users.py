@@ -18,7 +18,7 @@ class Users(db.Model):
 
     organization = db.relationship('Organizations', back_populates='users')
 
-    def __init__(self,first_name, last_name, email, phone, city, state, age, org_id, active=True):
+    def __init__(self, first_name, last_name, email, phone, city, state, age, org_id, active=True):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
@@ -35,7 +35,7 @@ class UsersSchema(ma.Schema):
     class Meta:
         fields = ['user_id', 'first_name', 'last_name', 'email', 'phone', 'city','state', 'age', 'org_id', 'organization', 'active']
 
-    organization =ma.fields.Nested('OrganizationsSchema', only=['org_id', 'org_name'], many=False)
+    organization =ma.fields.Nested('OrganizationsSchema', only=['org_id', 'name'], many=False)
 
 user_schema = UsersSchema()
 users_schema = UsersSchema(many=True)
