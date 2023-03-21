@@ -178,7 +178,13 @@ def get_user_by_id(user_id):
 
     return jsonify(user_record), 200
 
-@app.route('/organization/get/<org_id>', methods=['GET'])
+@app.route('/orgs/get', methods=['GET'])
+def get_all_active_orgs():
+    orgs_records = db.session.query(Organizations).filter(Organization.active==True).all()
+    
+    return(), 200
+
+@app.route('/org/get/<org_id>', methods=['GET'])
 def get_org_by_id(org_id):
     if not org_exists(org_id):
         return jsonify(f"User {org_id} not found"), 404

@@ -38,10 +38,11 @@ class Organizations(db.Model):
 class OrganizationsSchema(ma.Schema):
     class Meta:
         fields = ('org_id', 'name', 'phone', 'city','state', 'active', 'type', 'users')
+
     users = ma.fields.Nested('UsersSchema', only=['user_id', 'first_name', 'last_name','organization'], many=True)
+
 org_schema = OrganizationsSchema()
 orgs_schema = OrganizationsSchema(many=True)
-
 class PublicOrganizationsSchema(ma.Schema):
     class Meta:
         fields = ('name', 'city', 'state')

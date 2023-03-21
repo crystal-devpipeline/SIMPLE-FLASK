@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request
 from users import Users, user_schema, users_schema
-from organizations import Organizations, org_schema, orgs_schema, public_org_schema, public_orgs_schema
+from organizations import Organizations, org_schema, orgs_schema, public_orgs_schema
 from db import db, init_db
 import uuid
 
@@ -14,6 +14,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{database_host}/{database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 init_db(app, db)
+
+def populate_object(obj, data_dictionary):
+    fields = data_dictionary.keys()
+
+    for field in fields:
+        print(field)
+        if hasattr(obj, field):
+            print(getattr(obj, field))
+            setattr(obj, field, data_dictionary[field])
+            print(getattr(obj, field))
 
 def create_all():
     with app.app_context():
@@ -43,26 +53,28 @@ def org_exists(org_id):
 def add_user():
     data = request.json
 
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    email = data.get('email') #None
-    if not email:
-        return "Email must not be an empty str", 400
-    phone = data.get('phone')
-    if len(phone) > 20: 
-        return "Your phone number should be under 20 characters", 400
-    city = data.get('city')
-    state= data.get('state')
-    age = data.get('age')
-    org_id = data.get('org_id')
+    # first_name = data.get('first_name')
+    # last_name = data.get('last_name')
+    # email = data.get('email') #None
+    # if not email:
+    #     return "Email must not be an empty str", 400
+    # phone = data.get('phone')
+    # if len(phone) > 20: 
+    #     return "Your phone number should be under 20 characters", 400
+    # city = data.get('city')
+    # state= data.get('state')
+    # age = data.get('age')
+    # org_id = data.get('org_id')
+    new_user_record = Users()
+    populate_object(new_user_record, data)
 
-    new_user_record = Users(first_name, last_name, email, phone, city, state, age, org_id)
+    # new_user_record = Users(first_name, last_name, email, phone, city, state, age, org_id)
     db.session.add(new_user_record) 
     db.session.commit()
 
     return jsonify(user_schema.dump(new_user_record)), 201
 
-
+# start here!! re code like user/add route
 @app.route('/org/add', methods=['POST'])
 def add_organization():
     data = request.json
